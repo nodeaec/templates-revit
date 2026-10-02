@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Node.aec",
+  "classifications": ["Revit", "NodeAec"],
+  "identity": "NodeAec.Templates.RevitPlugin",
+  "groupIdentity": "NodeAec.RevitPlugin",
+  "name": "Node.aec Revit Plugin (Licensing Lite)",
+  "description": "Autodesk Revit add-in with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, release + installer scripts).",
+  "shortName": "nodeaec-revit-plugin",
+  "type": "project",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "__PluginName__",
+  "preferNameDirectory": true,
+  "defaultName": "MyRevitPlugin",
+  "primaryOutputs": [
+    { "path": "__PluginName__.csproj" }
+  ],
+  "symbols": {
+    "ProductSlug": {
+      "type": "parameter",
+      "dataType": "string",
+      "replaces": "__ProductSlug__",
+      "defaultValue": "my-revit-plugin",
+      "description": "Product slug in the Node.aec catalog (used by Gate.Validate; must match the entitlement claim)."
+    },
+    "AddInId": {
+      "type": "parameter",
+      "dataType": "string",
+      "replaces": "__AddInId__",
+      "defaultValue": "4870A0AB-7028-4D88-94BA-BFBAB38DA689",
+      "description": "Unique GUID of this add-in for the .addin manifest. Generate a fresh one per plugin (never reuse)."
+    },
+    "AppId": {
+      "type": "parameter",
+      "dataType": "string",
+      "replaces": "__AppId__",
+      "defaultValue": "A4465FDE-D63B-4A64-875C-9EA976AAA68C",
+      "description": "Unique GUID of the installer (Windows Settings > Apps entry). One per product, shared by all Revit-year groups."
+    }
+  }
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  __PluginName__ add-in manifest.
+
+  Install layout (per RevitYear, Node.aec convention: manifest at the Addins
+  folder root + payload in a subfolder):
+
+    %ProgramData%\Autodesk\Revit\Addins\<year>\__PluginName__.addin          (this file)
+    %ProgramData%\Autodesk\Revit\Addins\<year>\__PluginName__\__PluginName__.dll
+
+  <Assembly> is relative to the location of THIS manifest file. When a packaging
+  script rewrites it to an absolute path (as scripts/release.ps1 does), keep the
+  target identical: ...\Addins\<year>\__PluginName__\__PluginName__.dll
+
+  <AddInId> is unique to this add-in (set via 'dotnet new --AddInId'; never reuse
+  another add-in's GUID). <FullClassName> must match the IExternalApplication in
+  App.cs — the IExternalCommand is reached through the Ribbon button, so it does
+  not need its own manifest entry.
+-->
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>__PluginName__</Name>
+    <Assembly>__PluginName__\__PluginName__.dll</Assembly>
+    <AddInId>__AddInId__</AddInId>
+    <FullClassName>__PluginName__.App</FullClassName>
+    <VendorId>NODEAEC</VendorId>
+    <VendorDescription>Node.aec — https://nodeaec.com.br</VendorDescription>
+  </AddIn>
+</RevitAddIns>

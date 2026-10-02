@@ -1,0 +1,14 @@
+# Build outputs (per Revit year)
+bin/
+obj/
+# Release artifacts (rebuilt by scripts/release.ps1)
+release/stage/
+release/*.zip
+release/*.exe
+# IDE / OS
+.vs/
+.vscode/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
