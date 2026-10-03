@@ -9,6 +9,10 @@ build-*.log
 # Test template output
 /tmp/
 
+# Packaging
+release/
+stage/
+
 # IDE / OS
 .vs/
 .vscode/
