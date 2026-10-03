@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Packaging project for the `dotnet new` template. The template itself lives in
+    content/ (project template) and .template.config/template.json (metadata).
+    Consumers install it with:
+      dotnet new install NodeAec.Templates.RevitPlugin
+  -->
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageId>NodeAec.Templates.RevitPlugin</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Node.aec</Authors>
+    <Description>Autodesk Revit add-in template with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, release + installer scripts).</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>Revit NodeAec template licensing</PackageTags>
+    <RepositoryUrl>https://github.com/nodeaec/templates-revit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeSource>false</IncludeSource>
+    <IsPackable>true</IsPackable>
+    <!-- Template packaging project: no code to compile, content only. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- Template content includes dotfiles (.template.config, .gitignore). -->
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include=".template.config/template.json" Pack="true" PackagePath="content/.template.config/template.json" />
+    <Content Include="content/**/*" Pack="true" PackagePath="content/" />
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="LICENSE" Pack="true" PackagePath="LICENSE" />
+  </ItemGroup>
+
+</Project>
