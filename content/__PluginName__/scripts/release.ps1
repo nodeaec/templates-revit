@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
   Builds, stages and zips the __PluginName__ for ONE Revit compatibility group,
-  and optionally compiles the Inno Setup installer (.exe) — same pipeline as
-  the Node.aec sample plugin's scripts/release.ps1, adapted to this template.
+  and optionally compiles the Inno Setup installer (.exe) from
+  scripts/installer.iss.
 
 .DESCRIPTION
   One compatibility group per invocation (-RevitYear, default "2025-2026";
@@ -105,9 +105,9 @@ $dll = Join-Path $OutDir $DllName
 if (-not (Test-Path $dll)) { throw "Build output not found: $dll" }
 
 # Stage: clean + copy runtime payload (plugin DLL + Lite licensing DLL + deps
-# file; never RevitAPI/AdWindows — same rule family as the build).
+# file; RevitAPI/AdWindows stay out — they are provided by Revit at runtime).
 # NodeAec.Licensing.Lite travels WITH the plugin (NuGet, CopyLocal): it is the
-# code that verifies the license offline. This template is the greenfield path.
+# code that verifies the license offline.
 if (Test-Path $StageDir) { Remove-Item $StageDir -Recurse -Force }
 New-Item $StageDir -ItemType Directory -Force | Out-Null
 Get-ChildItem $OutDir -Filter *.dll |
@@ -174,7 +174,7 @@ else {
   Write-Warning "Inno Setup 6 (ISCC.exe) not found - only the .zip was generated. Install from https://jrsoftware.org/isdl.php to also build $setupName."
 }
 
-# True when Revit Year is installed locally (same detection as installer.iss).
+# True when Revit Year is installed locally. Keep this detection in sync with installer.iss.
 function Test-RevitYearInstalled([string]$Year) {
   foreach ($dir in @("C:\Program Files\Autodesk\Revit $Year", "C:\Program Files\Autodesk\Revit\$Year")) {
     if (Test-Path $dir) { return $true }

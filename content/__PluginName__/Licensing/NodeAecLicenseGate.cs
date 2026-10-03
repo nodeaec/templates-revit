@@ -15,12 +15,12 @@ namespace __PluginName__.Licensing;
 /// UI; silently no-ops when the connector is not in the process).
 /// </para>
 /// <para>
-/// Standalone plugins adopt Lite via <c>PackageReference Include="NodeAec.Licensing.Lite"</c>:
+/// Lite is referenced via <c>PackageReference Include="NodeAec.Licensing.Lite"</c>:
 /// the Lite assembly is compiled INTO this plugin, so the decision runs inside this
-/// assembly. This template is the greenfield path for new plugins — the whole seam
-/// body is a single <c>Gate.Validate(ProductSlug)</c> call plus a six-member mapping.
-/// The Lite code is always present; a machine without credentials simply validates
-/// as not-licensed, so there is no "connector missing" branch.
+/// assembly. The whole seam body is a single <c>Gate.Validate(ProductSlug)</c> call
+/// plus a six-member mapping. The Lite code is always present; a machine without
+/// credentials simply validates as not-licensed, and a missing connector does not
+/// affect validation.
 /// </para>
 /// <para>
 /// The Lite <c>Snapshot</c> never crosses into command code: this seam maps it to a
@@ -84,8 +84,7 @@ public static class NodeAecLicenseGate
 
     /// <summary>
     /// Opens the Node.aec Connector UI (sign-in, key activation, renewal, seat
-    /// management). A missing connector degrades to a silent no-op — exactly the
-    /// Lite contract.
+    /// management). A missing connector is a silent no-op, per the Lite contract.
     /// </summary>
     public static void OpenConnector()
     {
@@ -119,7 +118,7 @@ public static class NodeAecLicenseGate
 
     /// <summary>
     /// Renders the entitlement expiry. <c>null</c> means the claim carries no expiry
-    /// (e.g. a perpetual license), never "already expired".
+    /// (e.g. a perpetual license); it is not an expiry date in the past.
     /// </summary>
     private static string FormatExpiry(DateTimeOffset? expiresAt)
     {

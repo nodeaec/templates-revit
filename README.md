@@ -1,6 +1,6 @@
 # Node.aec Revit Plugin Template
 
-`dotnet new` project template for a licensed Autodesk Revit add-in with Node.aec offline license verification built in. Greenfield path for new plugins; existing standalone plugins adopt Lite via `PackageReference`.
+`dotnet new` project template for a licensed Autodesk Revit add-in with Node.aec offline license verification built in. The generated project references `NodeAec.Licensing.Lite` via `PackageReference`, and the verification code is compiled into the plugin.
 
 ## Install
 
@@ -83,7 +83,7 @@ Rules:
 | `RevitYear` | Target framework | Notes |
 |---|---|---|
 | `2023`, `2024` | `net48` | Compatibility group `2023-2024`, built with year `2023`. |
-| `2025`, `2026` | `net8.0-windows` | Compatibility group `2025-2026`, built with year `2025`. `2026` stays on `net8.0-windows` so the same binary loads on Revit 2026.0–2026.4 and 2026.5. Default `RevitYear` is `2026`. |
+| `2025`, `2026` | `net8.0-windows` | Compatibility group `2025-2026`, built with year `2025`. `2026` targets `net8.0-windows` so one binary loads on Revit 2026.0–2026.4 and 2026.5. Default `RevitYear` is `2026`. |
 | `2027` | `net10.0-windows` | Compatibility group `2027`, built with year `2027`. |
 
 ```powershell

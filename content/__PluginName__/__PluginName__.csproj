@@ -5,9 +5,9 @@
 
     Revit-year matrix:
       2023 | 2024 -> net48
-      2025 | 2026 -> net8.0-windows   (2026 stays on net8 on purpose: a net8
-                                        add-in loads in the 2026.5 net10 host,
-                                        while the reverse fails in 2026.0-2026.4)
+      2025 | 2026 -> net8.0-windows   (2026 targets net8 on purpose: a net8
+                                        add-in loads in the 2026.5 net10 host
+                                        and in 2026.0-2026.4)
       2027        -> net10.0-windows
 
     Build:
@@ -16,16 +16,16 @@
       dotnet build -p:RevitYear=2027   # net10
 
     LICENSING (frozen contract NodeAec.Licensing.Gate):
-      Standalone plugins adopt NodeAec.Licensing.Lite via PackageReference — the
-      verification code is compiled INTO this plugin. No connector install is
-      needed at build time. This template is the greenfield path for new plugins.
-      The only seam is Licensing/NodeAecLicenseGate.cs: Gate.Validate(ProductSlug)
-      as the first statement of every command, branching only on IsLicensed.
+      NodeAec.Licensing.Lite is referenced via PackageReference — the
+      verification code is compiled INTO this plugin, so the build needs nothing
+      beyond the restored packages. The only seam is Licensing/NodeAecLicenseGate.cs:
+      Gate.Validate(ProductSlug) as the first statement of every command,
+      branching only on IsLicensed.
 
-    This project uses the explicit SDK-import form (Sdk.props / Sdk.targets)
-    instead of the Project Sdk attribute so the matrix above is evaluated BEFORE
-    the SDK is imported. BaseIntermediateOutputPath MUST be set that early; keep the
-    imports if you edit this file.
+    This project uses the explicit SDK-import form (Sdk.props / Sdk.targets); the
+    Project element carries no Sdk attribute. The matrix above is therefore
+    evaluated BEFORE the SDK is imported. BaseIntermediateOutputPath MUST be set
+    that early; keep the imports if you edit this file.
     ============================================================================
   -->
   <PropertyGroup>
