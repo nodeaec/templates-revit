@@ -1,7 +1,10 @@
 {
   "$schema": "http://json.schemastore.org/template",
   "author": "Node.aec",
-  "classifications": ["Revit", "NodeAec"],
+  "classifications": [
+    "Revit",
+    "NodeAec"
+  ],
   "identity": "NodeAec.Templates.RevitPlugin",
   "groupIdentity": "NodeAec.RevitPlugin",
   "name": "Node.aec Revit Plugin (Licensing Lite)",
@@ -16,7 +19,9 @@
   "preferNameDirectory": true,
   "defaultName": "MyRevitPlugin",
   "primaryOutputs": [
-    { "path": "__PluginName__.csproj" }
+    {
+      "path": "__PluginName__.csproj"
+    }
   ],
   "symbols": {
     "ProductSlug": {
@@ -29,16 +34,46 @@
     "AddInId": {
       "type": "parameter",
       "dataType": "string",
-      "replaces": "__AddInId__",
-      "defaultValue": "4870A0AB-7028-4D88-94BA-BFBAB38DA689",
-      "description": "Unique GUID of this add-in for the .addin manifest. Generate a fresh one per plugin (never reuse)."
+      "defaultValue": "",
+      "description": "GUID for <AddInId> in the .addin manifest. Leave empty to get a fresh one (recommended); never reuse another add-in's value."
     },
     "AppId": {
       "type": "parameter",
       "dataType": "string",
-      "replaces": "__AppId__",
-      "defaultValue": "A4465FDE-D63B-4A64-875C-9EA976AAA68C",
-      "description": "Unique GUID of the installer (Windows Settings > Apps entry). One per product, shared by all Revit-year groups."
+      "defaultValue": "",
+      "description": "Installer GUID (Windows Settings > Apps entry), one per product. Leave empty to get a fresh one."
+    },
+    "NewAddInId": {
+      "type": "generated",
+      "generator": "guid",
+      "parameters": {
+        "defaultFormat": "D"
+      }
+    },
+    "NewAppId": {
+      "type": "generated",
+      "generator": "guid",
+      "parameters": {
+        "defaultFormat": "D"
+      }
+    },
+    "AddInIdValue": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "AddInId",
+        "fallbackVariableName": "NewAddInId"
+      },
+      "replaces": "__AddInId__"
+    },
+    "AppIdValue": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "AppId",
+        "fallbackVariableName": "NewAppId"
+      },
+      "replaces": "__AppId__"
     }
   }
 }

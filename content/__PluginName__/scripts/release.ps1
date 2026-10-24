@@ -22,12 +22,15 @@
   DLL load on every year of the group. Passing a non-floor year of a group
   resolves to that group and logs a notice.
 
+  -Version has no default and must equal <Version> in __PluginName__.csproj, so the
+  DLL, the zip and the installer always carry the same version.
+
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1 -RevitYear 2025-2026
-  powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1 -RevitYear 2023-2024 -Install
+  powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1.0 -RevitYear 2025-2026
+  powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1.0 -RevitYear 2023-2024 -Install
 #>
 param(
-  [string]$Version = "0.1",
+  [string]$Version,
   [string]$RevitYear = "2025-2026",
   [string]$Configuration = "Release",
   # Inno Setup AppId shared by every year (user-supplied identity).
@@ -41,8 +44,11 @@ $ErrorActionPreference = "Stop"
 if ($args.Count -gt 0) {
   throw "Unrecognized arguments: $($args -join ' '). Use -RevitYear <group> (e.g. -RevitYear 2023-2024)."
 }
+if ([string]::IsNullOrWhiteSpace($Version)) {
+  throw "-Version is required (e.g. -Version 0.1.0). Use the same value as <Version> in __PluginName__.csproj."
+}
 if ($Version -notmatch '^\d+\.\d+(\.\d+){0,2}([.-][0-9A-Za-z]+)*$') {
-  throw "Invalid version: '$Version'. Use SemVer (e.g. 0.1) and pass the group with -RevitYear <group>."
+  throw "Invalid version: '$Version'. Use SemVer (e.g. 0.1.0) and pass the group with -RevitYear <group>."
 }
 
 # One installer per Revit compatibility group. The group defines the years the
@@ -77,11 +83,11 @@ if ($AppId -notmatch '^\{[0-9A-Fa-f-]{36}\}$|^[0-9A-Fa-f-]{36}$') {
 }
 if ($AppId -notmatch '^\{') { $AppId = "{$AppId}" }
 
-# This script lives in <repo>\scripts: the repo root holds src/.
+# This script lives in <project>\scripts, next to __PluginName__.csproj.
 $RepoRoot = Split-Path $PSScriptRoot -Parent
-$Project = Join-Path $RepoRoot "src\__PluginName__\__PluginName__.csproj"
+$Project = Join-Path $RepoRoot "__PluginName__.csproj"
 $DllName = "__PluginName__.dll"
-$AddinTemplate = Join-Path $RepoRoot "src\__PluginName__\__PluginName__.addin"
+$AddinTemplate = Join-Path $RepoRoot "__PluginName__.addin"
 $ReleaseDir = Join-Path $RepoRoot "release"
 $StageDir = Join-Path $ReleaseDir "stage\__PluginName__"
 $ZipPath = Join-Path $ReleaseDir "__PluginName__-$Version-R$Group.zip"
@@ -92,7 +98,16 @@ $TargetFramework = (& dotnet msbuild $Project -getProperty:TargetFramework -p:Re
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($TargetFramework)) {
   throw "Could not resolve TargetFramework for RevitYear=$BuildYear (exit $LASTEXITCODE)."
 }
-$OutDir = Join-Path $RepoRoot "src\__PluginName__\bin\$BuildYear\$Configuration\$TargetFramework"
+$OutDir = Join-Path $RepoRoot "bin\$BuildYear\$Configuration\$TargetFramework"
+
+$ProjectVersion = (& dotnet msbuild $Project -getProperty:Version -p:RevitYear=$BuildYear -nologo -v:quiet |
+  Select-Object -Last 1).ToString().Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($ProjectVersion)) {
+  throw "Could not read <Version> from $Project (exit $LASTEXITCODE)."
+}
+if ($Version -ne $ProjectVersion) {
+  throw "-Version $Version differs from <Version>$ProjectVersion</Version> in __PluginName__.csproj. Update the csproj or pass -Version $ProjectVersion."
+}
 
 if (-not $SkipBuild) {
   $buildArgs = @("build", $Project, "-c", $Configuration, "-p:RevitYear=$BuildYear")
@@ -115,6 +130,17 @@ Get-ChildItem $OutDir -Filter *.dll |
   Copy-Item -Destination $StageDir -Force
 Get-ChildItem $OutDir -Filter *.deps.json -ErrorAction SilentlyContinue |
   Copy-Item -Destination $StageDir -Force
+# Optional ribbon icons (App.cs loads Resources\Icon16.png / Icon32.png next to the DLL).
+if (Test-Path (Join-Path $OutDir "Resources")) {
+  Copy-Item (Join-Path $OutDir "Resources") $StageDir -Recurse -Force
+}
+# Without the license package the plugin loads, but every command fails with a
+# FileNotFoundException instead of the license dialog.
+foreach ($required in @("NodeAec.Licensing.Lite.dll", "BouncyCastle.Cryptography.dll")) {
+  if (-not (Test-Path (Join-Path $StageDir $required))) {
+    throw "Missing licensing dependency in build output: $required was not copied to $OutDir."
+  }
+}
 if (Test-Path (Join-Path $RepoRoot "README.md")) {
   Copy-Item (Join-Path $RepoRoot "README.md") (Join-Path $StageDir "README.md") -Force
 }
@@ -122,7 +148,7 @@ if (Test-Path (Join-Path $RepoRoot "README.md")) {
 # Stage the .addin with the absolute Assembly path for the BUILD year. This
 # staged copy only feeds the .zip (the Setup compiles its manifests in [Code],
 # one per installed year of the group); keep it aligned with the build year.
-# AddInId stays the plugin's own (passed as --AddInId at 'dotnet new' time).
+# AddInId stays the plugin's own (generated at 'dotnet new' time).
 $installDir = "C:\ProgramData\Autodesk\Revit\Addins\$BuildYear\__PluginName__"
 [xml]$addin = Get-Content $AddinTemplate
 $addin.RevitAddIns.AddIn.Assembly = "$installDir\$DllName"
@@ -202,6 +228,9 @@ if ($Install) {
     New-Item $targetDir -ItemType Directory -Force | Out-Null
     Copy-Item "$StageDir\*.dll" $targetDir -Force
     Copy-Item "$StageDir\*.deps.json" $targetDir -Force -ErrorAction SilentlyContinue
+    if (Test-Path (Join-Path $StageDir "Resources")) {
+      Copy-Item (Join-Path $StageDir "Resources") $targetDir -Recurse -Force
+    }
     [xml]$addin = Get-Content $AddinTemplate
     $addin.RevitAddIns.AddIn.Assembly = "C:\ProgramData\Autodesk\Revit\Addins\$year\__PluginName__\$DllName"
     $addin.Save((Join-Path $addinsDir "__PluginName__.addin"))

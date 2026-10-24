@@ -20,9 +20,9 @@ namespace __PluginName__;
 /// hooks keep the tab deduplicated across add-in reloads.
 /// </para>
 /// <para>
-/// Deliberately contains no Node.aec licensing API calls: the Ribbon must come up
-/// even when the license cannot be verified, so the only licensing surface of this
-/// plugin lives in <see cref="Licensing.NodeAecLicenseGate"/>.
+/// Deliberately contains no licensing calls: the Ribbon must come up even when the
+/// license cannot be verified. The license check lives at the top of
+/// <see cref="Commands.HelloCommand.Execute"/>.
 /// </para>
 /// </summary>
 public class App : IExternalApplication

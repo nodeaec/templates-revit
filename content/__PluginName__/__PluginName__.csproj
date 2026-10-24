@@ -15,12 +15,11 @@
       dotnet build -p:RevitYear=2023   # net48
       dotnet build -p:RevitYear=2027   # net10
 
-    LICENSING (frozen contract NodeAec.Licensing.Gate):
-      NodeAec.Licensing.Lite is referenced via PackageReference — the
-      verification code is compiled INTO this plugin, so the build needs nothing
-      beyond the restored packages. The only seam is Licensing/NodeAecLicenseGate.cs:
-      Gate.Validate(ProductSlug) as the first statement of every command,
-      branching only on IsLicensed.
+    LICENSING: NodeAec.Licensing.Lite is referenced via PackageReference (nuget.org).
+      The verification code ships INSIDE this plugin's folder, so the build needs
+      nothing beyond the restored packages. Every command calls
+      Gate.Validate(ProductSlug) as its first statement and decides on IsLicensed
+      only (see Commands/HelloCommand.cs).
 
     This project uses the explicit SDK-import form (Sdk.props / Sdk.targets); the
     Project element carries no Sdk attribute. The matrix above is therefore
@@ -71,7 +70,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>__PluginName__</RootNamespace>
     <AssemblyName>__PluginName__</AssemblyName>
-    <Version>0.1</Version>
+    <Version>0.1.0</Version>
     <Description>__PluginName__ — Node.aec-licensed plugin for Autodesk Revit.</Description>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <!-- Autodesk.Windows (AdWindows) surfaces WPF types (ribbon icons). -->
@@ -87,7 +86,7 @@
     <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitApiPkgVersion)" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="Nice3point.Revit.Api.AdWindows" Version="$(RevitApiPkgVersion)" PrivateAssets="all" ExcludeAssets="runtime" />
     <!-- Offline license verification, compiled into this plugin via NuGet. -->
-    <PackageReference Include="NodeAec.Licensing.Lite" Version="1.0.0-preview.1" />
+    <PackageReference Include="NodeAec.Licensing.Lite" Version="0.3.0" />
   </ItemGroup>
 
   <ItemGroup>

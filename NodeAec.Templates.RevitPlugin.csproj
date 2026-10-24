@@ -9,7 +9,7 @@
   <PropertyGroup>
     <PackageType>Template</PackageType>
     <PackageId>NodeAec.Templates.RevitPlugin</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Node.aec</Authors>
     <Description>Autodesk Revit add-in template with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, release + installer scripts).</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -29,7 +29,9 @@
 
   <ItemGroup>
     <Content Include=".template.config/template.json" Pack="true" PackagePath="content/.template.config/template.json" />
-    <Content Include="content/**/*" Pack="true" PackagePath="content/" />
+    <!-- Flattened: the files of content/__PluginName__/ sit at the template root, so
+         `dotnet new -n MyPlugin` produces MyPlugin/MyPlugin.csproj (not MyPlugin/MyPlugin/). -->
+    <Content Include="content/__PluginName__/**/*" Pack="true" PackagePath="content/" />
     <None Include="README.md" Pack="true" PackagePath="README.md" />
     <None Include="LICENSE" Pack="true" PackagePath="LICENSE" />
   </ItemGroup>
