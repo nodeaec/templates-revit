@@ -32,6 +32,55 @@ Each run generates fresh GUIDs for the `.addin` `<AddInId>`, the installer `AppI
 | `MyPlugin.csproj` | Multi-targeting project driven by the `RevitYear` property (2023–2027). Declares `PackageReference` entries for the Revit API (reference-only, `PrivateAssets="all"`, `ExcludeAssets="runtime"`) and `NodeAec.Licensing.Lite`. |
 | `scripts/release.ps1` | Release pipeline: builds the three compatibility groups (floor years 2023 / 2025 / 2027) into one Autodesk bundle (`MyPlugin.bundle`: `PackageContents.xml` + `Contents\<group>\`) and zips it with a `.sha256` checksum. `-Version` is required and must match `<Version>` in the csproj. With Inno Setup 6 installed, also compiles `scripts/installer.iss` into `MyPlugin-<version>-Setup.exe`. `-Install` copies the bundle to `%ProgramData%\Autodesk\ApplicationPlugins\`. |
 | `scripts/installer.iss` | Inno Setup definition consumed by `release.ps1`. One Setup for Revit 2023–2027: the user checks the Revit versions (installed ones start checked; a re-run starts from the previous choice; silent: `/RevitYears=2025,2026`). Installs the bundle under `%ProgramData%\Autodesk\ApplicationPlugins\` with only the checked groups' builds, and removes installs made by the per-group installers of template 0.2.0 and older. |
+| `AGENTS.md` | Brief for coding agents working in the generated project: the project map, the rules that must never break, common tasks, and where to check versions that go stale. |
+| `.agents/skills/licensing-integrate/` | The Node.aec licensing skill (copy of the [canonical one in the Sample Plugin](https://github.com/nodeaec/revit-sample-plugin/tree/main/.agents/skills/licensing-integrate)): detailed steps, rules and the manual Revit checks. |
+
+## After scaffolding
+
+1. **Check the product slug.** `ProductSlug` in `Commands/HelloCommand.cs` must be the slug
+   registered on Node.aec (`--ProductSlug` set it). A typo blocks every user with "product
+   not found".
+2. **Name your panel.** `PanelName` in `App.cs` is the project name; set the name users
+   should see inside the `Node.aec` tab.
+3. **Add your commands.** Copy `HelloCommand`, keep its first lines (the license check) and
+   replace the rest with your feature. Add a button for it in `App.cs`
+   (`AddButtonIfMissing`, with a unique internal name). With several commands, move
+   `ProductSlug` to one shared class.
+4. **Build** each group of Revit years: `dotnet build -p:RevitYear=2023`, `2025`, `2027`.
+5. **Test in Revit.** `scripts/release.ps1 -Version 0.1.0 -Install` (Revit closed), open
+   Revit, click your button: without a license you see the blocked dialog, after signing in
+   with the Node.aec Connector the command runs. The full list of checks is in
+   `.agents/skills/licensing-integrate/references/validation.md`.
+6. **Release.** Raise `<Version>` in the csproj, run `scripts/release.ps1 -Version <it>`, and
+   ship `release/MyPlugin-<version>-Setup.exe`. Tell your users they also need the
+   [Node.aec Connector](https://nodeaec.com.br/products/nodeaec-connector).
+
+The source comments explain why each piece is the way it is. The
+[Sample Plugin](https://github.com/nodeaec/revit-sample-plugin) is this template's output with
+demo content and a longer walkthrough.
+
+### With a coding agent
+
+The generated project carries `AGENTS.md` and the skill `.agents/skills/licensing-integrate/`.
+Agents that read `AGENTS.md` pick them up on their own; the prompt below also points to them.
+Paste it into your agent:
+
+```text
+Create a new Autodesk Revit plugin licensed through Node.aec.
+
+Follow the skill at https://github.com/nodeaec/revit-sample-plugin/tree/main/.agents/skills/licensing-integrate
+(SKILL.md, path A). After scaffolding, follow the project's AGENTS.md and its copy of the skill.
+
+Before writing code, ask me the questions in the skill's section 2 (product slug, Revit
+years, panel name, which commands are paid, test machine) and wait for my answers.
+
+Then: install the template (dotnet new install NodeAec.Templates.RevitPlugin), scaffold with
+dotnet new nodeaec-revit-plugin, add my commands with the gate as their first statement,
+build every compatibility group with 0 errors, and package with scripts/release.ps1.
+
+Finish with: the files you created or changed, and the manual Revit checks from the
+skill's references/validation.md that I still have to run.
+```
 
 ## Licensing integration
 
@@ -150,6 +199,9 @@ revit-templates/
 │   ├── __PluginName__.csproj
 │   ├── __PluginName__.addin
 │   ├── Commands/HelloCommand.cs
+│   ├── AGENTS.md
+│   ├── .agents/skills/licensing-integrate/   # copy of the Sample Plugin's skill
 │   └── scripts/release.ps1 + installer.iss + installer-after*.txt
+├── AGENTS.md                        # for agents maintaining this template
 └── README.md
 ```
