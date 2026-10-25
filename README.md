@@ -20,7 +20,7 @@ cd MyPlugin
 dotnet build -p:RevitYear=2026
 ```
 
-Each run generates fresh GUIDs for the `.addin` `<AddInId>` and the installer `AppId`.
+Each run generates fresh GUIDs for the `.addin` `<AddInId>`, the installer `AppId`, and the bundle's `ProductCode` / `UpgradeCode`.
 
 ## Generated files
 
@@ -28,10 +28,10 @@ Each run generates fresh GUIDs for the `.addin` `<AddInId>` and the installer `A
 |---|---|
 | `App.cs` | `IExternalApplication`: creates or reuses the shared `Node.aec` ribbon tab, adds the plugin panel (`PanelName`), inserts the command button idempotently, registers AdWindows deduplication hooks, and loads optional PNG icons with `BitmapCacheOption.OnLoad` + `Freeze()`. Contains no licensing calls. |
 | `Commands/HelloCommand.cs` | Reference `IExternalCommand` and the whole licensing integration: holds `ProductSlug`, calls `Gate.Validate(ProductSlug)` as the first statement, and when not licensed shows the gate's message in Revit's UI language with an `Open Node.aec Connector...` link and returns `Result.Cancelled`. Otherwise it shows the greeting with the license details (never the license key) and returns `Result.Succeeded`. |
-| `MyPlugin.addin` | Add-in manifest. `<Assembly>` uses a path relative to the manifest location (`MyPlugin\MyPlugin.dll`). `<AddInId>` is a fresh GUID (or `--AddInId`). |
+| `MyPlugin.addin` | Add-in manifest. `<Assembly>` is relative to the manifest (`MyPlugin.dll`): packaging copies it next to the DLL in each `Contents\<group>\` folder of the bundle. `<AddInId>` is a fresh GUID (or `--AddInId`). |
 | `MyPlugin.csproj` | Multi-targeting project driven by the `RevitYear` property (2023–2027). Declares `PackageReference` entries for the Revit API (reference-only, `PrivateAssets="all"`, `ExcludeAssets="runtime"`) and `NodeAec.Licensing.Lite`. |
-| `scripts/release.ps1` | Release pipeline: builds the floor year of a compatibility group, stages the payload, and produces a versioned `.zip` with a `.sha256` checksum. `-Version` is required and must match `<Version>` in the csproj. With Inno Setup 6 installed, also compiles `scripts/installer.iss` into a per-group `Setup.exe`. |
-| `scripts/installer.iss` | Inno Setup definition consumed by `release.ps1`. Installs the payload under `%ProgramData%\Autodesk\Revit\Addins\<year>\` for every installed year of the group. |
+| `scripts/release.ps1` | Release pipeline: builds the three compatibility groups (floor years 2023 / 2025 / 2027) into one Autodesk bundle (`MyPlugin.bundle`: `PackageContents.xml` + `Contents\<group>\`) and zips it with a `.sha256` checksum. `-Version` is required and must match `<Version>` in the csproj. With Inno Setup 6 installed, also compiles `scripts/installer.iss` into `MyPlugin-<version>-Setup.exe`. `-Install` copies the bundle to `%ProgramData%\Autodesk\ApplicationPlugins\`. |
+| `scripts/installer.iss` | Inno Setup definition consumed by `release.ps1`. One Setup for Revit 2023–2027: the user checks the Revit versions (installed ones start checked; a re-run starts from the previous choice; silent: `/RevitYears=2025,2026`). Installs the bundle under `%ProgramData%\Autodesk\ApplicationPlugins\` with only the checked groups' builds, and removes installs made by the per-group installers of template 0.2.0 and older. |
 
 ## Licensing integration
 
@@ -77,7 +77,7 @@ Rules:
 | `-n` | `MyRevitPlugin` | Plugin, assembly, namespace, and manifest name. Also becomes the ribbon panel name — change `PanelName` in `App.cs` to use a display name with spaces. |
 | `--ProductSlug` | `my-revit-plugin` | Product slug in the Node.aec catalog. Must match the entitlement claim checked by `Gate.Validate`. |
 | `--AddInId` | Fresh GUID per run | Unique manifest identifier (`<AddInId>` in the `.addin` file). Generate one GUID per plugin; never reuse another add-in's value. |
-| `--AppId` | Fresh GUID per run | Installer identity passed to `release.ps1` / `installer.iss`. One value per product, shared by all Revit-year groups, producing a single entry under Windows Settings > Apps. |
+| `--AppId` | Fresh GUID per run | Installer identity in `installer.iss`: one value per product, producing a single entry under Windows Settings > Apps. When regenerating an existing product, pass its current `AppId` so the new Setup takes over the old entry. |
 
 ## Updating Lite
 
@@ -107,24 +107,30 @@ the group (2023, 2025, 2027), so one DLL loads on every Revit year of that group
 
 ## Deploy
 
-Manual deployment (development loop, per Revit year):
+One run builds every compatibility group and packages one Autodesk bundle:
 
 ```powershell
-# Copy bin\<year>\<tfm>\*.dll and the .addin to:
-# %ProgramData%\Autodesk\Revit\Addins\<year>\
+powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1.0
+powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1.0 -Install   # also install it here (close Revit first)
 ```
 
-Grouped release artifact (zip + checksum, optionally installer):
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.1.0 -RevitYear 2025-2026
+```
+MyPlugin.bundle\
+  PackageContents.xml        one component per Revit year (2023-2027)
+  Contents\2023-2024\        net48 build + MyPlugin.addin
+  Contents\2025-2026\        net8.0-windows build + MyPlugin.addin
+  Contents\2027\             net10.0-windows build + MyPlugin.addin
 ```
 
-`release.ps1` accepts one compatibility group per invocation
-(`2023-2024` / `2025-2026` / `2027`); a single year (`2023`–`2027`) is accepted
-as an alias and resolves to its group. With `-Install`, the staged payload is
-also copied to every installed Revit year of the group, each with its own
-absolute `<Assembly>` path in the manifest.
+Artifacts in `release\`:
+
+- `MyPlugin-<version>-Setup.exe`: the installer for end users (needs Inno Setup 6). One checkbox per Revit year; only the checked years load the plugin.
+- `MyPlugin-<version>.bundle.zip`: the same bundle for IT deployment; extract it into `%ProgramData%\Autodesk\ApplicationPlugins\`.
+
+Revit reads `%ProgramData%\Autodesk\ApplicationPlugins\*.bundle\PackageContents.xml` at
+startup and loads only the component matching its version. The `ProductCode` and
+`UpgradeCode` in `release.ps1` and `installer.iss` identify the bundle: keep them
+identical in both files and never change them between versions.
 
 ## Manual verification
 

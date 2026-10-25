@@ -9,9 +9,9 @@
   <PropertyGroup>
     <PackageType>Template</PackageType>
     <PackageId>NodeAec.Templates.RevitPlugin</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>Node.aec</Authors>
-    <Description>Autodesk Revit add-in template with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, release + installer scripts).</Description>
+    <Description>Autodesk Revit add-in template with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, one .bundle + one installer for every Revit year).</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>Revit NodeAec template licensing</PackageTags>

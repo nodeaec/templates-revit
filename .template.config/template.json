@@ -8,7 +8,7 @@
   "identity": "NodeAec.Templates.RevitPlugin",
   "groupIdentity": "NodeAec.RevitPlugin",
   "name": "Node.aec Revit Plugin (Licensing Lite)",
-  "description": "Autodesk Revit add-in with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, release + installer scripts).",
+  "description": "Autodesk Revit add-in with Node.aec offline license verification built in (shared Node.aec tab, fail-closed gate, RevitYear matrix 2023-2027, one .bundle + one installer for every Revit year).",
   "shortName": "nodeaec-revit-plugin",
   "type": "project",
   "tags": {
@@ -74,6 +74,22 @@
         "fallbackVariableName": "NewAppId"
       },
       "replaces": "__AppId__"
+    },
+    "NewProductCode": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "__ProductCode__",
+      "parameters": {
+        "defaultFormat": "D"
+      }
+    },
+    "NewUpgradeCode": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "__UpgradeCode__",
+      "parameters": {
+        "defaultFormat": "D"
+      }
     }
   }
 }

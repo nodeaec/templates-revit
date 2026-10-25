@@ -12,3 +12,4 @@ release/*.exe
 *.suo
 .DS_Store
 Thumbs.db
+release/*.sha256
