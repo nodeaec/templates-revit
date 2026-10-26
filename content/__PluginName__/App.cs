@@ -22,8 +22,9 @@ namespace __PluginName__;
 /// <para>
 /// Ribbon rules (same conventions as the Node.aec Connector):
 /// the button lives in the SHARED canonical <c>Node.aec</c> tab — this add-in never
-/// owns a tab of its own — inside its own <c>__PluginName__</c> panel with a single
-/// <c>Hello World</c> push button. One tab for every Node.aec plugin keeps the user's
+/// owns a tab of its own — inside its own <c>__PluginName__</c> panel, titled with the company
+/// name (<see cref="CompanyName"/>) so the Connector shows it in the company's group, with a
+/// single push button named after the plugin. One tab for every Node.aec plugin keeps the user's
 /// Ribbon short and puts every product they bought in one place. Tab creation tolerates
 /// only the "already exists" ArgumentException, panel/button insertion is idempotent,
 /// and AdWindows lifecycle hooks keep the tab deduplicated across add-in reloads.
@@ -42,14 +43,26 @@ public class App : IExternalApplication
     /// <summary>Shared canonical tab. Owned by the Node.aec ecosystem — never re-created as a plugin tab.</summary>
     public const string TabName = "Node.aec";
 
-    /// <summary>This plugin's panel inside the shared tab.</summary>
+    /// <summary>
+    /// Title of the group this plugin's buttons appear in: the company name, spelled exactly the
+    /// same in every plugin the company publishes (one group per company on the tab).
+    /// </summary>
+    public const string CompanyName = "__CompanyName__";
+
+    /// <summary>
+    /// Internal name of this plugin's panel, unique to the plugin. Never the company name:
+    /// Revit refuses a panel name another add-in already created.
+    /// </summary>
     public const string PanelName = "__PluginName__";
 
-    /// <summary>Internal (non-localized) id of the push button; used for idempotent insertion.</summary>
+    /// <summary>
+    /// Internal (non-localized) id of the push button; used for idempotent insertion. It starts
+    /// with the plugin name and <c>_</c> so the Connector keeps this plugin's buttons together.
+    /// </summary>
     public const string ButtonId = "__PluginName___HelloWorld";
 
-    /// <summary>Display text of the push button.</summary>
-    public const string ButtonText = "Hello World";
+    /// <summary>Display text of the push button: the plugin's name.</summary>
+    public const string ButtonText = "__PluginName__";
 
     /// <summary>
     /// Builds the Ribbon (tab → panel → button) and registers the dedup hooks.
@@ -71,6 +84,7 @@ public class App : IExternalApplication
             DeduplicateTab();
 
             RevitRibbonPanel panel = GetOrCreatePanel(application, TabName, PanelName);
+            SetGroupTitle(panel);
             AddButtonIfMissing(panel, BuildHelloButtonData());
 
             RegisterRibbonHooks(application);
@@ -131,6 +145,23 @@ public class App : IExternalApplication
     }
 
     /// <summary>
+    /// Shows the panel under the company's group title (<see cref="CompanyName"/>). The
+    /// Connector merges every panel with the same title into one group, so all of a company's
+    /// plugins sit together. Best effort: if Revit refuses the title, the panel keeps its name.
+    /// </summary>
+    private static void SetGroupTitle(RevitRibbonPanel panel)
+    {
+        try
+        {
+            panel.Title = CompanyName;
+        }
+        catch (Exception)
+        {
+            // The panel stays visible under its own name.
+        }
+    }
+
+    /// <summary>
     /// Creates or reuses the <see cref="PanelName"/> panel inside the shared tab —
     /// the idempotent GetOrCreatePanel pattern.
     /// </summary>
@@ -154,7 +185,7 @@ public class App : IExternalApplication
     }
 
     /// <summary>
-    /// Creates the <c>Hello World</c> push button descriptor bound to <see cref="HelloCommand"/>.
+    /// Creates the plugin's push button descriptor bound to <see cref="HelloCommand"/>.
     /// Revit stores the DLL path and the class name, and creates the command from them on
     /// each click. <c>Assembly.Location</c> is the path this DLL was actually loaded from
     /// (the bundle's <c>Contents\&lt;group&gt;\</c> folder), so it is right wherever the
@@ -307,8 +338,10 @@ public class App : IExternalApplication
                 {
                     duplicateTab.Panels.Remove(panel);
 
+                    // Only the same panel id is a leftover copy. A panel that merely shares the
+                    // title is another plugin of the same company: keep it (the Connector merges
+                    // same-title panels into one group).
                     bool alreadyInPrimary = primaryTab.Panels.Any(p =>
-                        string.Equals(p.Source?.Title, panel.Source?.Title, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(p.Source?.Id, panel.Source?.Id, StringComparison.OrdinalIgnoreCase));
 
                     if (!alreadyInPrimary)

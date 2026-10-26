@@ -24,6 +24,13 @@
     }
   ],
   "symbols": {
+    "CompanyName": {
+      "type": "parameter",
+      "dataType": "string",
+      "replaces": "__CompanyName__",
+      "defaultValue": "Minha Empresa",
+      "description": "Your company name: the title of your group on the Node.aec tab. Spell it exactly the same in every plugin you publish, so they share one group."
+    },
     "ProductSlug": {
       "type": "parameter",
       "dataType": "string",

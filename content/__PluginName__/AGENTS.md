@@ -23,7 +23,7 @@ must never break.
 | File | Role |
 |---|---|
 | `Commands/HelloCommand.cs` | Reference paid command: the gate, the blocked dialog, the licensed path. Holds `ProductSlug`. |
-| `App.cs` | `IExternalApplication`: the plugin's panel in the shared `Node.aec` tab, its buttons, tab deduplication. No licensing calls. |
+| `App.cs` | `IExternalApplication`: the plugin's panel in the shared `Node.aec` tab, titled with the company name (`CompanyName`, one group per company), its buttons (`<Plugin>_<Command>` internal names), tab deduplication. No licensing calls. |
 | `__PluginName__.addin` | Revit manifest (relative `Assembly`, this add-in's `AddInId`). |
 | `__PluginName__.csproj` | Revit-year matrix (`-p:RevitYear=2023..2027`), Revit API packages (never copied), `NodeAec.Licensing.Lite`. |
 | `scripts/release.ps1` | Builds every Revit group into `__PluginName__.bundle`, the `.bundle.zip` and the Setup.exe. |
@@ -63,6 +63,7 @@ Do not trust a version written in a doc or a comment; check its source:
 |---|---|
 | This plugin's version | `<Version>` in `__PluginName__.csproj`; publish the same version on the platform |
 | Product slug | `ProductSlug` in `Commands/HelloCommand.cs`; repeated in `$ProductSlug` in `scripts/release.ps1` (written to `NodeAec.product.json` for the Connector) and `ProductSlug` in `scripts/installer.iss`. Change all three together |
+| Group title on the `Node.aec` tab | `CompanyName` in `App.cs`; the same text in every plugin the company publishes, or the plugins split into two groups |
 | Lite version to build against | Latest: <https://www.nuget.org/packages/NodeAec.Licensing.Lite>. Use the version the current Node.aec Connector ships, or older: the `PackageReference` in [revit-connector `src/NodeAec.Connector/NodeAec.Connector.csproj`](https://github.com/nodeaec/revit-connector/blob/main/src/NodeAec.Connector/NodeAec.Connector.csproj) |
 | `Snapshot` members, `GateReason` values and messages | [licensing-lite README](https://github.com/nodeaec/licensing-lite#readme) |
 | Revit year → target framework, Revit API package versions | `TargetFramework` / `RevitApiPkgVersion` in `__PluginName__.csproj`; compare with the [Sample Plugin's csproj](https://github.com/nodeaec/revit-sample-plugin/blob/main/src/SamplePlugin/SamplePlugin.csproj) when adding a Revit year |

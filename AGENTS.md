@@ -45,7 +45,7 @@ After changing a value, find every place that repeats it: `grep -rn "<old value>
 ```powershell
 dotnet pack NodeAec.Templates.RevitPlugin.csproj -c Release -o <tmp>\pkg
 dotnet new install <tmp>\pkg\NodeAec.Templates.RevitPlugin.<version>.nupkg --debug:custom-hive <tmp>\hive
-cd <tmp>; dotnet new nodeaec-revit-plugin -n TplCheck --ProductSlug tpl-check --debug:custom-hive <tmp>\hive
+cd <tmp>; dotnet new nodeaec-revit-plugin -n TplCheck --ProductSlug tpl-check --CompanyName "Tpl Check" --debug:custom-hive <tmp>\hive
 cd TplCheck; powershell -ExecutionPolicy Bypass -File scripts\release.ps1 -Version 0.1.0
 ```
 

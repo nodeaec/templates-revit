@@ -15,7 +15,7 @@ To update an existing install: `dotnet new install NodeAec.Templates.RevitPlugin
 ## Scaffold
 
 ```powershell
-dotnet new nodeaec-revit-plugin -n MyPlugin --ProductSlug my-plugin
+dotnet new nodeaec-revit-plugin -n MyPlugin --ProductSlug my-plugin --CompanyName "Minha Empresa"
 cd MyPlugin
 dotnet build -p:RevitYear=2026
 ```
@@ -40,8 +40,12 @@ Each run generates fresh GUIDs for the `.addin` `<AddInId>`, the installer `AppI
 1. **Check the product slug.** `ProductSlug` in `Commands/HelloCommand.cs` must be the slug
    registered on Node.aec (`--ProductSlug` set it). A typo blocks every user with "product
    not found".
-2. **Name your panel.** `PanelName` in `App.cs` is the project name; set the name users
-   should see inside the `Node.aec` tab.
+2. **Check your group.** On the `Node.aec` tab each company has one group, with its plugins
+   inside. `CompanyName` in `App.cs` (`--CompanyName` set it) is the group title: spell it
+   exactly the same in every plugin you publish. `PanelName` is internal and must stay unique
+   to the plugin, and the button shows the plugin's name. Start every button's internal name
+   with the plugin name and `_` (`MyPlugin_Export`) so the Connector keeps your buttons
+   together.
 3. **Add your commands.** Copy `HelloCommand`, keep its first lines (the license check) and
    replace the rest with your feature. Add a button for it in `App.cs`
    (`AddButtonIfMissing`, with a unique internal name). With several commands, move
@@ -117,13 +121,14 @@ Rules:
 - Show the message as-is, in the user's language (`MessageLanguage.Portuguese` or `English`; the template follows Revit's UI language). It already names the one reason and the next step, so never add a list of possible causes around it.
 - Never show or log `gate.LicenseKey`: it is the end user's secret.
 - Never copy `RevitAPI*.dll`, `RevitAPIUI.dll`, `AdWindows.dll`, or `UIFramework*` to the output payload; they are provided by Revit at runtime.
-- Never create a plugin-owned ribbon tab; always use the shared `Node.aec` tab with a plugin-owned panel.
+- Never create a plugin-owned ribbon tab; always use the shared `Node.aec` tab with a plugin-owned panel titled with your company name.
 
 ## Parameters
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `-n` | `MyRevitPlugin` | Plugin, assembly, namespace, and manifest name. Also becomes the ribbon panel name — change `PanelName` in `App.cs` to use a display name with spaces. |
+| `-n` | `MyRevitPlugin` | Plugin, assembly, namespace, and manifest name. Also becomes the internal panel name (`PanelName`) and the button text (`ButtonText` in `App.cs`; change it to use a display name with spaces). |
+| `--CompanyName` | `Minha Empresa` | Title of your group on the `Node.aec` tab (`CompanyName` in `App.cs`). Use the same value for every plugin you publish so they share one group. |
 | `--ProductSlug` | `my-revit-plugin` | Product slug in the Node.aec catalog. Must match the entitlement claim checked by `Gate.Validate`. Also written into `release.ps1` and `installer.iss`: change all three together. |
 | `--AddInId` | Fresh GUID per run | Unique manifest identifier (`<AddInId>` in the `.addin` file). Generate one GUID per plugin; never reuse another add-in's value. |
 | `--AppId` | Fresh GUID per run | Installer identity in `installer.iss`: one value per product, producing a single entry under Windows Settings > Apps. When regenerating an existing product, pass its current `AppId` so the new Setup takes over the old entry. |
