@@ -50,4 +50,6 @@ cd TplCheck; powershell -ExecutionPolicy Bypass -File scripts\release.ps1 -Versi
 ```
 
 The three group builds must end with 0 warnings and 0 errors, and no `__Token__` may remain
-in the generated files. Publishing to nuget.org is done by the maintainer, never by an agent.
+in the generated files. Publishing to nuget.org is automated via GitHub Actions Trusted Publishing
+(`.github/workflows/publish.yml`) triggered by pushing a release tag (`v<version>`) or manually
+via `workflow_dispatch`. An agent never pushes to nuget.org directly.

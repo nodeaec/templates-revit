@@ -1,0 +1,76 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (pack and validate without pushing to nuget.org)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Build, Validate & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pack template package
+        run: |
+          dotnet pack NodeAec.Templates.RevitPlugin.csproj -c Release -o ./artifacts
+
+      - name: Validate scaffolded template (smoke test)
+        run: |
+          HIVE_DIR=$(mktemp -d)
+          TEST_DIR=$(mktemp -d)
+          
+          echo "Installing package into isolated custom hive..."
+          dotnet new install ./artifacts/*.nupkg --debug:custom-hive "$HIVE_DIR"
+          
+          echo "Scaffolding smoke test plugin..."
+          dotnet new nodeaec-revit-plugin -n TplSmokeTest \
+            --ProductSlug tpl-smoke-test \
+            --CompanyName "Smoke Test Co" \
+            --debug:custom-hive "$HIVE_DIR" \
+            -o "$TEST_DIR/TplSmokeTest"
+          
+          echo "Building scaffolded plugin against Revit 2026 (net8.0-windows)..."
+          dotnet build "$TEST_DIR/TplSmokeTest/TplSmokeTest.csproj" -p:RevitYear=2026 -c Release
+          
+          echo "Verifying no unreplaced tokens remain..."
+          if grep -rn "__[A-Za-z0-9_]*__" "$TEST_DIR/TplSmokeTest/App.cs" "$TEST_DIR/TplSmokeTest/Commands/"; then
+            echo "Error: Unreplaced tokens detected in scaffolded files!"
+            exit 1
+          fi
+          
+          rm -rf "$HIVE_DIR" "$TEST_DIR"
+          echo "Smoke test passed successfully."
+
+      - name: NuGet login via OIDC (Trusted Publishing)
+        if: ${{ !inputs.dry_run }}
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: nodeaec
+
+      - name: Publish to NuGet.org
+        if: ${{ !inputs.dry_run }}
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
