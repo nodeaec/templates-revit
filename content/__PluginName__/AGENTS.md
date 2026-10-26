@@ -61,7 +61,8 @@ Do not trust a version written in a doc or a comment; check its source:
 
 | Fact | Source of truth |
 |---|---|
-| This plugin's version | `<Version>` in `__PluginName__.csproj` |
+| This plugin's version | `<Version>` in `__PluginName__.csproj`; publish the same version on the platform |
+| Product slug | `ProductSlug` in `Commands/HelloCommand.cs`; repeated in `$ProductSlug` in `scripts/release.ps1` (written to `NodeAec.product.json` for the Connector) and `ProductSlug` in `scripts/installer.iss`. Change all three together |
 | Lite version to build against | Latest: <https://www.nuget.org/packages/NodeAec.Licensing.Lite>. Use the version the current Node.aec Connector ships, or older: the `PackageReference` in [revit-connector `src/NodeAec.Connector/NodeAec.Connector.csproj`](https://github.com/nodeaec/revit-connector/blob/main/src/NodeAec.Connector/NodeAec.Connector.csproj) |
 | `Snapshot` members, `GateReason` values and messages | [licensing-lite README](https://github.com/nodeaec/licensing-lite#readme) |
 | Revit year → target framework, Revit API package versions | `TargetFramework` / `RevitApiPkgVersion` in `__PluginName__.csproj`; compare with the [Sample Plugin's csproj](https://github.com/nodeaec/revit-sample-plugin/blob/main/src/SamplePlugin/SamplePlugin.csproj) when adding a Revit year |

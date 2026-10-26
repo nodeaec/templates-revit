@@ -77,6 +77,10 @@ $DisplayName = "__PluginName__"
 $Description = "__PluginName__ for Autodesk Revit"
 $ProductCode = "{__ProductCode__}"
 $UpgradeCode = "{__UpgradeCode__}"
+# Node.aec product slug: the same value as ProductSlug in Commands\HelloCommand.cs and
+# installer.iss. NodeAec.product.json carries it so the Node.aec Connector can match this
+# installed bundle to the product on the account and offer its updates.
+$ProductSlug = "__ProductSlug__"
 
 # The script lives in <project>\scripts, next to __PluginName__.csproj.
 $RepoRoot = Split-Path $PSScriptRoot -Parent
@@ -170,6 +174,9 @@ foreach ($group in $RevitYearGroups.Keys) {
 
 $allYears = @($RevitYearGroups.Values | ForEach-Object { $_ })
 Write-PackageContents (Join-Path $BundleStage "PackageContents.xml") $allYears
+# Read by the Node.aec Connector, not by Revit (Revit ignores extra files in a bundle).
+$productJson = "{`"productSlug`": `"$ProductSlug`", `"version`": `"$Version`"}"
+[IO.File]::WriteAllText((Join-Path $BundleStage "NodeAec.product.json"), $productJson, (New-Object Text.UTF8Encoding($false)))
 if (Test-Path (Join-Path $RepoRoot "README.md")) {
   Copy-Item (Join-Path $RepoRoot "README.md") (Join-Path $BundleStage "README.md") -Force
 }

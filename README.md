@@ -30,8 +30,8 @@ Each run generates fresh GUIDs for the `.addin` `<AddInId>`, the installer `AppI
 | `Commands/HelloCommand.cs` | Reference `IExternalCommand` and the whole licensing integration: holds `ProductSlug`, calls `Gate.Validate(ProductSlug)` as the first statement, and when not licensed shows the gate's message in Revit's UI language with an `Open Node.aec Connector...` link and returns `Result.Cancelled`. Otherwise it shows the greeting with the license details (never the license key) and returns `Result.Succeeded`. |
 | `MyPlugin.addin` | Add-in manifest. `<Assembly>` is relative to the manifest (`MyPlugin.dll`): packaging copies it next to the DLL in each `Contents\<group>\` folder of the bundle. `<AddInId>` is a fresh GUID (or `--AddInId`). |
 | `MyPlugin.csproj` | Multi-targeting project driven by the `RevitYear` property (2023–2027). Declares `PackageReference` entries for the Revit API (reference-only, `PrivateAssets="all"`, `ExcludeAssets="runtime"`) and `NodeAec.Licensing.Lite`. |
-| `scripts/release.ps1` | Release pipeline: builds the three compatibility groups (floor years 2023 / 2025 / 2027) into one Autodesk bundle (`MyPlugin.bundle`: `PackageContents.xml` + `Contents\<group>\`) and zips it with a `.sha256` checksum. `-Version` is required and must match `<Version>` in the csproj. With Inno Setup 6 installed, also compiles `scripts/installer.iss` into `MyPlugin-<version>-Setup.exe`. `-Install` copies the bundle to `%ProgramData%\Autodesk\ApplicationPlugins\`. |
-| `scripts/installer.iss` | Inno Setup definition consumed by `release.ps1`. One Setup for Revit 2023–2027: the user checks the Revit versions (installed ones start checked; a re-run starts from the previous choice; silent: `/RevitYears=2025,2026`). Installs the bundle under `%ProgramData%\Autodesk\ApplicationPlugins\` with only the checked groups' builds, and removes installs made by the per-group installers of template 0.2.0 and older. |
+| `scripts/release.ps1` | Release pipeline: builds the three compatibility groups (floor years 2023 / 2025 / 2027) into one Autodesk bundle (`MyPlugin.bundle`: `PackageContents.xml` + `NodeAec.product.json` + `Contents\<group>\`) and zips it with a `.sha256` checksum. `-Version` is required and must match `<Version>` in the csproj. With Inno Setup 6 installed, also compiles `scripts/installer.iss` into `MyPlugin-<version>-Setup.exe`. `-Install` copies the bundle to `%ProgramData%\Autodesk\ApplicationPlugins\`. |
+| `scripts/installer.iss` | Inno Setup definition consumed by `release.ps1`. One Setup for Revit 2023–2027: the user checks the Revit versions (installed ones start checked; a re-run starts from the previous choice; silent: `/RevitYears=2025,2026`). Installs the bundle under `%ProgramData%\Autodesk\ApplicationPlugins\` with only the checked groups' builds, and removes installs made by the per-group installers of template 0.2.0 and older. `/WaitForRevit` waits for Revit to close instead of refusing; the Node.aec Connector uses it to install and update the plugin from inside Revit. |
 | `AGENTS.md` | Brief for coding agents working in the generated project: the project map, the rules that must never break, common tasks, and where to check versions that go stale. |
 | `.agents/skills/licensing-integrate/` | The Node.aec licensing skill (copy of the [canonical one in the Sample Plugin](https://github.com/nodeaec/revit-sample-plugin/tree/main/.agents/skills/licensing-integrate)): detailed steps, rules and the manual Revit checks. |
 
@@ -124,7 +124,7 @@ Rules:
 | Flag | Default | Meaning |
 |---|---|---|
 | `-n` | `MyRevitPlugin` | Plugin, assembly, namespace, and manifest name. Also becomes the ribbon panel name — change `PanelName` in `App.cs` to use a display name with spaces. |
-| `--ProductSlug` | `my-revit-plugin` | Product slug in the Node.aec catalog. Must match the entitlement claim checked by `Gate.Validate`. |
+| `--ProductSlug` | `my-revit-plugin` | Product slug in the Node.aec catalog. Must match the entitlement claim checked by `Gate.Validate`. Also written into `release.ps1` and `installer.iss`: change all three together. |
 | `--AddInId` | Fresh GUID per run | Unique manifest identifier (`<AddInId>` in the `.addin` file). Generate one GUID per plugin; never reuse another add-in's value. |
 | `--AppId` | Fresh GUID per run | Installer identity in `installer.iss`: one value per product, producing a single entry under Windows Settings > Apps. When regenerating an existing product, pass its current `AppId` so the new Setup takes over the old entry. |
 
@@ -180,6 +180,14 @@ Revit reads `%ProgramData%\Autodesk\ApplicationPlugins\*.bundle\PackageContents.
 startup and loads only the component matching its version. The `ProductCode` and
 `UpgradeCode` in `release.ps1` and `installer.iss` identify the bundle: keep them
 identical in both files and never change them between versions.
+
+`NodeAec.product.json` (`{"productSlug": "...", "version": "..."}`) is for the Node.aec
+Connector, not Revit. It lets the Connector match the installed bundle to the product on the
+user's account, show the installed version, and offer **Atualizar** when the platform has a
+newer one (or **Instalar** when the user owns the plugin but has not installed it here).
+For that to work, publish each release on the platform with the same version as
+`-Version` (plain `major.minor.patch`), and upload `MyPlugin-<version>-Setup.exe` as the
+version's default file.
 
 ## Manual verification
 
