@@ -25,6 +25,8 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <!-- Template content includes dotfiles (.template.config, .gitignore). -->
     <NoDefaultExcludes>true</NoDefaultExcludes>
+    <!-- Template content includes scripts intended for scaffolds, not NuGet install hooks. -->
+    <NoWarn>$(NoWarn);NU5110;NU5111</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
